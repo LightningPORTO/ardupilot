@@ -2145,15 +2145,35 @@ bool QuadPlane::init_mode(void)
  */
 bool QuadPlane::handle_do_vtol_transition(enum MAV_VTOL_STATE state)
 {
-    if (!available()) {
+
+    if(state==MAV_VTOL_STATE_HYBRID_ON|| state==MAV_VTOL_STATE_HYBRID_OFF)
+    {
+        //hal.console->printf("Received Custom VTOL Message \n");
+    }
+    else
+    {
+        if (!available()) {
         gcs().send_text(MAV_SEVERITY_NOTICE, "VTOL not available");
         return false;
-    }
-    if (plane.control_mode != &plane.mode_auto) {
+        }
+        if (plane.control_mode != &plane.mode_auto) {
         gcs().send_text(MAV_SEVERITY_NOTICE, "VTOL transition only in AUTO");
         return false;
+        }
     }
+    
     switch (state) {
+
+    case MAV_VTOL_STATE_HYBRID_ON:
+        gcs().send_text(MAV_SEVERITY_ERROR, "Forcing Assist Mode ON");
+        q_assist_state=Q_ASSIST_FORCE;
+        return true;
+
+    case MAV_VTOL_STATE_HYBRID_OFF:
+        gcs().send_text(MAV_SEVERITY_ERROR, "Forcing Assist Mode OFF");
+        q_assist_state=Q_ASSIST_ENABLED;
+        return true;
+        
     case MAV_VTOL_STATE_MC:
         if (!plane.auto_state.vtol_mode) {
             gcs().send_text(MAV_SEVERITY_NOTICE, "Entered VTOL mode");
